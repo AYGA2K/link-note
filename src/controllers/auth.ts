@@ -14,13 +14,14 @@ const generateToken = (userId: string): string => {
   );
 };
 
-export const register = async (req: Request, res: Response) => {
+export async function register(req: Request, res: Response) {
   try {
     const { firstName, lastName, email, password } = req.body;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: 'Email already in use.' });
+      res.status(400).json({ message: 'Email already in use.' });
+      return;
     }
 
     const newUser = await new User({
@@ -46,18 +47,20 @@ export const register = async (req: Request, res: Response) => {
   }
 };
 
-export const login = async (req: Request, res: Response) => {
+export async function login(req: Request, res: Response) {
   try {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ message: 'Invalid email or password.' });
+      res.status(400).json({ message: 'Invalid email or password.' });
+      return
     }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid email or password.' });
+      res.status(400).json({ message: 'Invalid email or password.' });
+      return
     }
 
     const token = generateToken(user.id.toString());
@@ -76,18 +79,20 @@ export const login = async (req: Request, res: Response) => {
   }
 };
 
-export const logout = async (req: Request, res: Response) => {
+export async function logout(req: Request, res: Response) {
   try {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ message: 'Invalid email or password.' });
+      res.status(400).json({ message: 'Invalid email or password.' });
+      return
     }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid email or password.' });
+      res.status(400).json({ message: 'Invalid email or password.' });
+      return
     }
 
     res.status(200).json({ message: 'Logged out successfully.' });
@@ -96,20 +101,23 @@ export const logout = async (req: Request, res: Response) => {
   }
 };
 
-export const me = async (req: Request, res: Response) => {
+export async function me(req: Request, res: Response) {
   try {
     if (!req.headers.authorization) {
-      return res.status(401).json({ message: 'Missing token.' });
+      res.status(401).json({ message: 'Missing token.' });
+      return
     }
     const token = req.headers.authorization.split(' ')[1];
     const decoded = jwt.verify(token, JWT_SECRET) as IUser;
 
     if (!decoded) {
-      return res.status(400).json({ message: 'Invalid token.' });
+      res.status(400).json({ message: 'Invalid token.' });
+      return
     }
     const user = await User.findById(decoded.id);
     if (!user) {
-      return res.status(400).json({ message: 'Invalid token.' });
+      res.status(400).json({ message: 'Invalid token.' });
+      return
     }
 
     res.status(200).json({
