@@ -1,4 +1,4 @@
-import mongoose, { Mongoose, MongooseError } from 'mongoose';
+import mongoose from 'mongoose';
 import User, { IUser } from '../src/models/user';
 
 describe('User Model', () => {
