@@ -1,15 +1,13 @@
 import { Request, Response } from 'express';
-import Note from '../models/note';
 import { BadRequestError, NotFoundError } from '../errors';
-import { validate } from '../middlewares/validate';
-import { createNoteSchema, noteIdSchema, updateNoteSchema } from '../schemas/note';
+import Note from '../models/note';
 
-async function getAllNotes(req: Request, res: Response) {
+export async function getAllNotes(req: Request, res: Response) {
   const notes = await Note.find();
   res.status(200).json(notes);
 };
 
-async function getNoteById(req: Request, res: Response) {
+export async function getNoteById(req: Request, res: Response) {
   const id = req.params.id;
   if (!id) {
     throw new BadRequestError('Invalid request');
@@ -21,11 +19,8 @@ async function getNoteById(req: Request, res: Response) {
   res.status(200).json(note);
 };
 
-async function createNote(req: Request, res: Response) {
+export async function createNote(req: Request, res: Response) {
   const { title, content, tags, linksTo, folderId } = req.body;
-  if (!title || !content || !tags || !linksTo || !folderId) {
-    throw new BadRequestError('Invalid request');
-  }
   const note = await new Note({
     title,
     content,
@@ -33,19 +28,15 @@ async function createNote(req: Request, res: Response) {
     linksTo,
     folderId,
   }).save();
-
   res.status(201).json(note);
 };
 
-async function updateNote(req: Request, res: Response) {
+export async function updateNote(req: Request, res: Response) {
   const { id } = req.params;
   if (!id) {
     throw new BadRequestError('Invalid request');
   }
   const { title, content, tags, linksTo, folderId } = req.body;
-  if (!title || !content || !tags || !linksTo || !folderId) {
-    throw new BadRequestError('Invalid request');
-  }
   const note = await Note.findByIdAndUpdate(id, {
     title,
     content,
@@ -61,8 +52,11 @@ async function updateNote(req: Request, res: Response) {
   res.status(200).json(note);
 };
 
-async function deleteNote(req: Request, res: Response) {
+export async function deleteNote(req: Request, res: Response) {
   const { id } = req.params;
+  if (!id) {
+    throw new BadRequestError('Invalid request');
+  }
   const note = await Note.findByIdAndDelete(id);
 
   if (!note) {
@@ -71,10 +65,3 @@ async function deleteNote(req: Request, res: Response) {
 
   res.status(200).json(note);
 };
-export default {
-  getAllNotes,
-  getNoteById: [validate(noteIdSchema), getNoteById],
-  createNote: [validate(createNoteSchema), createNote],
-  updateNote: [validate(updateNoteSchema), updateNote],
-  deleteNote: [validate(noteIdSchema), deleteNote]
-}
