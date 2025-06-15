@@ -45,11 +45,9 @@ export async function updateNote(req: Request, res: Response) {
     linksTo,
     folderId,
   }, { new: true });
-
   if (!note) {
     throw new NotFoundError('Note not found');
   }
-
   res.status(200).json(note);
 };
 
@@ -59,10 +57,8 @@ export async function deleteNote(req: Request, res: Response) {
     throw new BadRequestError('Invalid request');
   }
   const note = await Note.findByIdAndDelete(id);
-
   if (!note) {
     throw new NotFoundError('Note not found');
   }
-
   res.status(200).json(note);
 };

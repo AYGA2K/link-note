@@ -18,6 +18,7 @@ export function errorHandler(
         name: err.name,
       },
     });
+    return;
   }
 
   // Handle Zod validation errors
@@ -29,6 +30,7 @@ export function errorHandler(
         issues: err.issues,
       },
     });
+    return;
   }
 
   // Handle Mongoose CastError (invalid ObjectId format)
@@ -41,12 +43,12 @@ export function errorHandler(
         value: err.value,
       },
     });
+    return;
   }
   if (err instanceof mongoose.Error.ValidationError) {
     res.status(400).json(err);
+    return;
   }
-
-  console.error('Error type:', err.constructor.name);
 
   res.status(500).json(err);
 
