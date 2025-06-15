@@ -20,8 +20,9 @@ export async function getNoteById(req: Request, res: Response) {
 };
 
 export async function createNote(req: Request, res: Response) {
-  const { title, content, tags, linksTo, folderId } = req.body;
+  const { userId, title, content, tags, linksTo, folderId } = req.body;
   const note = await new Note({
+    userId,
     title,
     content,
     tags,
