@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
 import { ZodError } from "zod";
 import { HttpError } from "../errors";
+import { CircularReferenceError } from "../models/folder";
 
 export function errorHandler(
 	err: Error,
@@ -48,6 +49,14 @@ export function errorHandler(
 		res.status(400).json(err);
 		return;
 	}
-
+	if (err instanceof CircularReferenceError) {
+		res.status(400).json({
+			error: {
+				message: err.message,
+				name: err.name,
+			},
+		});
+		return;
+	}
 	res.status(500).json(err);
 }

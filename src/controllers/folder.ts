@@ -58,7 +58,7 @@ export async function updateFolder(req: Request, res: Response) {
 }
 
 export async function moveFolder(req: Request, res: Response) {
-	const { id, newParentId } = req.body;
+	const { id, parentFolderId } = req.body;
 
 	// Get current folder
 	const folder = await Folder.findById(id);
@@ -74,8 +74,8 @@ export async function moveFolder(req: Request, res: Response) {
 	}
 
 	// Add to new parent's children
-	if (newParentId) {
-		await Folder.findByIdAndUpdate(newParentId, {
+	if (parentFolderId) {
+		await Folder.findByIdAndUpdate(parentFolderId, {
 			$push: { childrenFolders: id },
 		});
 	}
@@ -83,7 +83,7 @@ export async function moveFolder(req: Request, res: Response) {
 	// Update folder's parent reference
 	const updatedFolder = await Folder.findByIdAndUpdate(
 		id,
-		{ parentFolderId: newParentId || null, isRoot: !newParentId },
+		{ parentFolderId: parentFolderId || null, isRoot: !parentFolderId },
 		{ new: true },
 	);
 
