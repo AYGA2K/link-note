@@ -1,5 +1,12 @@
 import { Router } from "express";
-import { createFolder, deleteFolder, getAllFolders, getFolderById, moveFolder, updateFolder } from "../controllers/folder";
+import {
+	createFolder,
+	deleteFolder,
+	getAllFolders,
+	getFolderById,
+	moveFolder,
+	updateFolder,
+} from "../controllers/folder";
 
 const folderRouter = Router();
 
