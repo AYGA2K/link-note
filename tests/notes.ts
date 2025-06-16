@@ -6,15 +6,13 @@ import Folder, { type IFolder } from "../src/models/folder";
 import Note from "../src/models/note";
 import User, { type IUser } from "../src/models/user";
 import noteRouter from "../src/routes/note";
-
 const app = express();
 app.use(express.json());
 app.use("/notes", noteRouter);
 app.use(errorHandler);
 
 // Test database setup
-const TEST_DB_URI =
-	process.env.TEST_DB_URI || "mongodb://localhost:27017/notes_test";
+const TEST_DB_URI = process.env.TEST_DB_URI;
 
 describe("Note API (Integration Tests)", () => {
 	let testUser: IUser;
@@ -183,7 +181,6 @@ describe("Note API (Integration Tests)", () => {
 		it("should reject POST with missing title (400 Bad Request)", async () => {
 			const newNote = {
 				userId: testUser.id,
-				// title: 'Test Note',
 				content: "Test Content",
 				tags: ["tag1"],
 				folderId: testFolder.id,
