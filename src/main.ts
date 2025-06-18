@@ -3,11 +3,13 @@ import express from "express";
 import { connectDB } from "./database/db";
 import { errorHandler } from "./middlewares/errorHandler";
 import { router } from "./routes";
+import { authMiddleware } from "./middlewares/auth";
 dotenv.config();
 
 const app = express();
 
 app.use(express.json());
+app.use(authMiddleware);
 app.use("/api", router);
 app.use(errorHandler);
 

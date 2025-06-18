@@ -8,6 +8,11 @@ export class HttpError extends Error {
 		Error.captureStackTrace(this, this.constructor);
 	}
 }
+export class InvalidTokenError extends HttpError {
+	constructor(message = "Invalid token") {
+		super(401, message);
+	}
+}
 
 export class BadRequestError extends HttpError {
 	constructor(message = "Bad Request") {

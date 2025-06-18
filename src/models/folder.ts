@@ -1,4 +1,9 @@
-import mongoose, { type Document, type Model, Schema, Types } from "mongoose";
+import mongoose, {
+	type Document,
+	type Model,
+	Schema,
+	type Types,
+} from "mongoose";
 
 export interface IFolder extends Document {
 	userId: Types.ObjectId;
