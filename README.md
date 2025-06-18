@@ -48,11 +48,60 @@ link-note/
 
 ## API Endpoints
 
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-- `GET /api/auth/me` - Get current user
-- `GET/POST/PUT/DELETE /api/notes` - Note operations
-- `GET/POST/PUT/DELETE /api/folders` - Folder operations
+### Authentication
+- `POST /api/auth/register` - Register a new user
+- `POST /api/auth/login` - Login existing user
+- `GET /api/auth/me` - Get current user info
+
+### Notes
+- `GET /api/notes` - Get all notes
+- `GET /api/notes/:id` - Get note by ID
+- `POST /api/notes` - Create new note
+- `PUT /api/notes/:id` - Update note
+- `DELETE /api/notes/:id` - Delete note
+
+### Folders
+- `GET /api/folders` - Get all folders
+- `GET /api/folders/:id` - Get folder by ID
+- `POST /api/folders` - Create new folder
+- `PUT /api/folders/:id` - Update folder
+- `PATCH /api/folders/move` - Move folder
+- `DELETE /api/folders/:id` - Delete folder
+
+## Database Models
+
+### User
+- _id: ObjectId (auto-generated)
+- firstName: String (required, unique)
+- lastName: String (required, unique)
+- email: String (required, unique)
+- password: String (required)
+- createdAt: Date
+- updatedAt: Date
+
+### Note
+- _id: ObjectId (auto-generated)
+- userId: ObjectId (ref: User)
+- title: String (required)
+- content: String (required)
+- tags: [String]
+- linksTo: [ObjectId] (ref: Note)
+- folderId: ObjectId (ref: Folder)
+- createdAt: Date
+- updatedAt: Date
+
+### Folder
+- _id: ObjectId (auto-generated)
+- userId: ObjectId (ref: User)
+- name: String (required)
+- description: String
+- parentFolderId: ObjectId (ref: Folder)
+- childrenFolders: [ObjectId] (ref: Folder)
+- notes: [ObjectId] (ref: Note)
+- tags: [String]
+- isRoot: Boolean
+- createdAt: Date
+- updatedAt: Date
 
 ## Testing
 
