@@ -147,7 +147,6 @@ describe("Folder API (Integration Tests)", () => {
 					id: childFolder.id,
 					parentFolderId: newParent.id,
 				});
-			console.log(res.body);
 
 			expect(res.status).toBe(200);
 			expect(res.body.parentFolderId).toBe(newParent.id);
@@ -217,14 +216,11 @@ describe("Folder API (Integration Tests)", () => {
 				userId: testUser._id,
 				name: "Folder 1",
 			});
-			console.log(folder1);
 			const folder2 = await Folder.create({
 				userId: testUser._id,
 				name: "Folder 2",
 				parentFolderId: folder1._id,
 			});
-			console.log(folder2);
-
 			// Try to make folder1 a child of folder2 (creating a loop)
 			const res = await request(app)
 				.patch("/folders/move")
@@ -233,8 +229,6 @@ describe("Folder API (Integration Tests)", () => {
 					id: folder1._id,
 					parentFolderId: folder2._id,
 				});
-			console.log(res.body);
-
 			expect(res.status).toBe(400);
 		});
 	});
