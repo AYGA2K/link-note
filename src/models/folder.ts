@@ -70,9 +70,7 @@ FolderSchema.pre<IFolder>("save", async function (next) {
 	}
 
 	// Check if parent is in immediate children
-	if (
-		this.childrenFolders.some((childId) => childId.equals(this.parentFolderId))
-	) {
+	if (this.childrenFolders.some((childId) => childId.toString() === this.id)) {
 		throw new CircularReferenceError("Cannot set a child folder as parent");
 	}
 
@@ -82,88 +80,71 @@ FolderSchema.pre<IFolder>("save", async function (next) {
 		.lean();
 
 	if (parentFolder?.childrenFolders?.length) {
-		if (this._id instanceof Types.ObjectId)
-			await checkCircularReference(this._id, parentFolder.childrenFolders);
+		await isAncestor(this.parentFolderId.toString(), this.id);
 	}
 
 	next();
 });
-
 FolderSchema.pre("findOneAndUpdate", async function (next) {
 	const update = this.getUpdate() as IFolder;
-	if (!update) return next;
+	if (!update || !update.parentFolderId) return next();
 
-	if (!update.parentFolderId) return next();
-	const parentFolderId = update.parentFolderId;
-
+	const newParentId = update.parentFolderId;
 	const folderId = this.getFilter()._id;
 
-	// Check direct self-reference
-	if (folderId === parentFolderId) {
-		throw new CircularReferenceError("Folder cannot be its own parent");
+	if (!folderId) {
+		throw new Error("Folder ID is required for update");
 	}
 
-	// Get current folder's children
-	const currentFolder = await Folder.findById(folderId)
+	// Convert to strings for consistent comparison
+	const folderIdStr = folderId.toString();
+	const newParentIdStr = newParentId.toString();
+
+	// Get the folder being moved (if it exists)
+	const folderToMove = await Folder.findById(folderId)
 		.select("childrenFolders")
 		.lean();
 
+	if (folderIdStr === newParentIdStr) {
+		throw new CircularReferenceError("Cannot move a folder to itself");
+	}
+
 	// Check if new parent is in immediate children
 	if (
-		currentFolder?.childrenFolders?.some((childId) =>
-			childId.equals(parentFolderId),
+		folderToMove?.childrenFolders?.some(
+			(childId) => childId.toString() === newParentIdStr,
 		)
 	) {
 		throw new CircularReferenceError("Cannot set a child folder as parent");
 	}
 
-	// Deep check for circular references
-	const parentFolder = await Folder.findById(parentFolderId)
-		.select("childrenFolders")
-		.lean();
-
-	if (parentFolder?.childrenFolders?.length) {
-		await checkCircularReference(folderId, parentFolder.childrenFolders);
+	// Check if new parent creates a circular reference
+	if (await isAncestor(newParentIdStr, folderIdStr)) {
+		throw new CircularReferenceError(
+			`Circular reference detected: Folder ${folderIdStr} would become an ancestor of itself`,
+		);
 	}
-
 	next();
 });
-
-async function checkCircularReference(
-	forbiddenParentId: Types.ObjectId,
-	childrenFolders: Types.ObjectId[],
-	checkedIds = new Set<string>(),
-): Promise<void> {
-	console.log("we are in check");
-	for (const childId of childrenFolders) {
-		// Skip if already checked
-		if (checkedIds.has(childId.toString())) continue;
-
-		// Check if this child is the forbidden parent
-		if (childId.equals(forbiddenParentId)) {
-			throw new CircularReferenceError(
-				`Circular reference detected: Folder ${forbiddenParentId} cannot be a parent of its ancestor`,
-			);
-		}
-
-		// Mark as checked
-		checkedIds.add(childId.toString());
-
-		// Get the child's children
-		const childFolder = await Folder.findById(childId)
-			.select("childrenFolders")
-			.lean();
-
-		// Recursively check if this child has children
-		if (childFolder?.childrenFolders?.length) {
-			await checkCircularReference(
-				forbiddenParentId,
-				childFolder.childrenFolders,
-				checkedIds,
-			);
+async function isAncestor(
+	parentId: string,
+	folderId: string,
+): Promise<boolean> {
+	const children = await Folder.findById(parentId);
+	if (children === null) {
+		return false;
+	}
+	if (children.parentFolderId?.toString() === folderId) {
+		return true;
+	}
+	for (const childId of children.childrenFolders) {
+		if (await isAncestor(childId.toString(), folderId)) {
+			return true;
 		}
 	}
+	return false;
 }
+
 const Folder: Model<IFolder> = mongoose.model<IFolder>("Folder", FolderSchema);
 
 export class CircularReferenceError extends Error {
