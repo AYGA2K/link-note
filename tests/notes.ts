@@ -46,6 +46,8 @@ describe("Note API (Integration Tests)", () => {
 	beforeEach(async () => {
 		// Clear the notes database before each test
 		await Note.deleteMany({});
+		await User.deleteMany({});
+		await Folder.deleteMany({});
 	});
 
 	afterAll(async () => {

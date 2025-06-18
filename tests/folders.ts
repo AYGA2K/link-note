@@ -40,6 +40,7 @@ describe("Folder API (Integration Tests)", () => {
 	beforeEach(async () => {
 		// Clear folders and create a root folder for each test
 		await Folder.deleteMany({});
+		await User.deleteMany({});
 		rootFolder = await Folder.create({
 			userId: testUser.id,
 			name: "Root",

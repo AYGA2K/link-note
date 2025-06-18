@@ -4,6 +4,8 @@ import request from "supertest";
 import { errorHandler } from "../src/middlewares/errorHandler";
 import User, { type IUser } from "../src/models/user";
 import authRouter from "../src/routes/auth";
+import Note from "../src/models/note";
+import Folder from "../src/models/folder";
 
 const app = express();
 app.use(express.json());
@@ -19,6 +21,10 @@ describe("Auth API (Integration Tests)", () => {
 			throw new Error("❌ TEST_DB_URI not set in environment variables");
 		}
 		await mongoose.connect(TEST_DB_URI);
+		await User.deleteMany({});
+	});
+
+	beforeEach(async () => {
 		await User.deleteMany({});
 	});
 
