@@ -5,25 +5,24 @@ import { errorHandler } from "../src/middlewares/errorHandler";
 import Folder, { type IFolder } from "../src/models/folder";
 import User, { type IUser } from "../src/models/user";
 import folderRouter from "../src/routes/folder";
+import { MongoMemoryServer } from "mongodb-memory-server";
 
 const app = express();
 app.use(express.json());
 app.use("/folders", folderRouter);
 app.use(errorHandler);
 
-const TEST_DB_URI =
-	process.env.TEST_DB_URI || "mongodb://localhost:27017/folders_test";
-
+let mongo: MongoMemoryServer;
 describe("Folder API (Integration Tests)", () => {
 	let testUser: IUser;
 	let authToken: string;
 	let rootFolder: IFolder;
 
 	beforeAll(async () => {
-		if (!TEST_DB_URI) {
-			throw new Error("❌ TEST_DB_URI not set in environment variables");
-		}
-		await mongoose.connect(TEST_DB_URI);
+		mongo = await MongoMemoryServer.create();
+		const uri = mongo.getUri();
+
+		await mongoose.connect(uri);
 
 		// Create test user
 		testUser = await User.create({
@@ -38,9 +37,8 @@ describe("Folder API (Integration Tests)", () => {
 	});
 
 	beforeEach(async () => {
-		// Clear folders and create a root folder for each test
+		// Clear the folders database before each test
 		await Folder.deleteMany({});
-		await User.deleteMany({});
 		rootFolder = await Folder.create({
 			userId: testUser.id,
 			name: "Root",
@@ -52,6 +50,7 @@ describe("Folder API (Integration Tests)", () => {
 		await Folder.deleteMany({});
 		await User.deleteMany({});
 		await mongoose.disconnect();
+		await mongo.stop();
 	});
 
 	describe("CRUD Operations", () => {

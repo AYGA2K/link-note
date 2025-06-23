@@ -6,23 +6,23 @@ import Folder, { type IFolder } from "../src/models/folder";
 import Note from "../src/models/note";
 import User, { type IUser } from "../src/models/user";
 import noteRouter from "../src/routes/note";
+import { MongoMemoryServer } from "mongodb-memory-server";
 const app = express();
 app.use(express.json());
 app.use("/notes", noteRouter);
 app.use(errorHandler);
 
-// Test database setup
-const TEST_DB_URI = process.env.TEST_DB_URI;
+let mongo: MongoMemoryServer;
 
 describe("Note API (Integration Tests)", () => {
 	let testUser: IUser;
 	let testFolder: IFolder;
 	let authToken: string;
 	beforeAll(async () => {
-		if (!TEST_DB_URI) {
-			throw new Error("❌ TEST_DB_URI not set in environment variables");
-		}
-		await mongoose.connect(TEST_DB_URI);
+		mongo = await MongoMemoryServer.create();
+		const uri = mongo.getUri();
+
+		await mongoose.connect(uri);
 
 		// Create a test user and get auth token
 		testUser = await new User({
@@ -46,8 +46,6 @@ describe("Note API (Integration Tests)", () => {
 	beforeEach(async () => {
 		// Clear the notes database before each test
 		await Note.deleteMany({});
-		await User.deleteMany({});
-		await Folder.deleteMany({});
 	});
 
 	afterAll(async () => {
@@ -56,6 +54,7 @@ describe("Note API (Integration Tests)", () => {
 		await Folder.deleteMany({});
 		await User.deleteMany({});
 		await mongoose.disconnect();
+		await mongo.stop();
 	});
 
 	// --- Tests ---

@@ -1,11 +1,10 @@
 import express from "express";
+import { MongoMemoryServer } from "mongodb-memory-server";
 import mongoose from "mongoose";
 import request from "supertest";
 import { errorHandler } from "../src/middlewares/errorHandler";
 import User, { type IUser } from "../src/models/user";
 import authRouter from "../src/routes/auth";
-import Note from "../src/models/note";
-import Folder from "../src/models/folder";
 
 const app = express();
 app.use(express.json());
@@ -13,27 +12,19 @@ app.use("/auth", authRouter);
 app.use(errorHandler);
 
 // Test database setup
-const TEST_DB_URI = process.env.TEST_DB_URI;
-
+let mongo: MongoMemoryServer;
 describe("Auth API (Integration Tests)", () => {
 	beforeAll(async () => {
-		if (!TEST_DB_URI) {
-			throw new Error("❌ TEST_DB_URI not set in environment variables");
-		}
-		await mongoose.connect(TEST_DB_URI);
-		await User.deleteMany({});
-	});
+		mongo = await MongoMemoryServer.create();
+		const uri = mongo.getUri();
 
-	beforeEach(async () => {
-		await User.deleteMany({});
-	});
-
-	afterEach(async () => {
-		await User.deleteMany({});
+		await mongoose.connect(uri);
 	});
 
 	afterAll(async () => {
+		await User.deleteMany({});
 		await mongoose.disconnect();
+		await mongo.stop();
 	});
 
 	describe("Registration", () => {
