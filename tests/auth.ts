@@ -5,10 +5,12 @@ import request from "supertest";
 import { errorHandler } from "../src/middlewares/errorHandler";
 import User, { type IUser } from "../src/models/user";
 import authRouter from "../src/routes/auth";
+import { authMiddleware } from "../src/middlewares/auth";
 
 const app = express();
 app.use(express.json());
-app.use("/auth", authRouter);
+app.use(authMiddleware);
+app.use("/api/auth", authRouter);
 app.use(errorHandler);
 
 // Test database setup
@@ -36,7 +38,7 @@ describe("Auth API (Integration Tests)", () => {
 				password: "password123",
 			};
 
-			const res = await request(app).post("/auth/register").send(newUser);
+			const res = await request(app).post("/api/auth/register").send(newUser);
 
 			expect(res.status).toBe(201);
 			expect(res.body).toHaveProperty("user");
@@ -58,10 +60,10 @@ describe("Auth API (Integration Tests)", () => {
 			};
 
 			// First registration
-			await request(app).post("/auth/register").send(userData);
+			await request(app).post("/api/auth/register").send(userData);
 
 			// Second registration with same email
-			const res = await request(app).post("/auth/register").send(userData);
+			const res = await request(app).post("/api/auth/register").send(userData);
 
 			expect(res.status).toBe(400);
 			expect(res.body.error.message).toBe("Email already in use");
@@ -75,7 +77,9 @@ describe("Auth API (Integration Tests)", () => {
 				password: "short",
 			};
 
-			const res = await request(app).post("/auth/register").send(invalidUser);
+			const res = await request(app)
+				.post("/api/auth/register")
+				.send(invalidUser);
 
 			expect(res.status).toBe(400);
 			expect(res.body.message).toBeDefined();
@@ -92,11 +96,11 @@ describe("Auth API (Integration Tests)", () => {
 
 		beforeEach(async () => {
 			// Create a test user before each login test
-			await request(app).post("/auth/register").send(testUserData);
+			await request(app).post("/api/auth/register").send(testUserData);
 		});
 
 		it("POST /auth/login → should login with valid credentials", async () => {
-			const res = await request(app).post("/auth/login").send({
+			const res = await request(app).post("/api/auth/login").send({
 				email: testUserData.email,
 				password: testUserData.password,
 			});
@@ -108,7 +112,7 @@ describe("Auth API (Integration Tests)", () => {
 		});
 
 		it("POST /auth/login → should reject invalid password", async () => {
-			const res = await request(app).post("/auth/login").send({
+			const res = await request(app).post("/api/auth/login").send({
 				email: testUserData.email,
 				password: "wrongpassword",
 			});
@@ -118,7 +122,7 @@ describe("Auth API (Integration Tests)", () => {
 		});
 
 		it("POST /auth/login → should reject non-existent email", async () => {
-			const res = await request(app).post("/auth/login").send({
+			const res = await request(app).post("/api/auth/login").send({
 				email: "nonexistent@example.com",
 				password: "password123",
 			});
@@ -140,8 +144,8 @@ describe("Auth API (Integration Tests)", () => {
 				password: "password123",
 			};
 
-			await request(app).post("/auth/register").send(userData);
-			const loginRes = await request(app).post("/auth/login").send({
+			await request(app).post("/api/auth/register").send(userData);
+			const loginRes = await request(app).post("/api/auth/login").send({
 				email: userData.email,
 				password: userData.password,
 			});
@@ -150,7 +154,7 @@ describe("Auth API (Integration Tests)", () => {
 
 		it("GET /auth/me → should return user data with valid token", async () => {
 			const res = await request(app)
-				.get("/auth/me")
+				.get("/api/auth/me")
 				.set("Authorization", `Bearer ${validToken}`);
 
 			expect(res.status).toBe(200);
@@ -158,20 +162,20 @@ describe("Auth API (Integration Tests)", () => {
 			expect(res.body.user.email).toBe("test@example.com");
 		});
 
-		// it("GET /auth/me → should reject request without token", async () => {
-		// 	const res = await request(app).get("/auth/me");
-		//
-		// 	expect(res.status).toBe(401);
-		// 	expect(res.body.message).toBe("Missing token.");
-		// });
-		//
-		// it("GET /auth/me → should reject invalid token", async () => {
-		// 	const res = await request(app)
-		// 		.get("/auth/me")
-		// 		.set("Authorization", "Bearer invalidtoken");
-		//
-		// 	expect(res.status).toBe(400);
-		// 	expect(res.body.message).toBe("Invalid token.");
-		// });
+		it("GET /auth/me → should reject request without token", async () => {
+			const res = await request(app).get("/api/auth/me");
+
+			expect(res.status).toBe(401);
+			expect(res.body.error.message).toBe("Missing token");
+		});
+
+		it("GET /auth/me → should reject invalid token", async () => {
+			const res = await request(app)
+				.get("/api/auth/me")
+				.set("Authorization", "Bearer invalidtoken");
+
+			expect(res.status).toBe(401);
+			expect(res.body.error.message).toBe("Invalid token");
+		});
 	});
 });

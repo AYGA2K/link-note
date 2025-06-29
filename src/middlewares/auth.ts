@@ -23,15 +23,20 @@ export async function authMiddleware(
 	if (!token) {
 		throw new UnauthorizedError("Missing token");
 	}
-	const decoded = jwt.verify(token, JWT_SECRET) as IUser;
+	try {
+		const decoded = jwt.verify(token, JWT_SECRET) as IUser;
+		if (!decoded) {
+			throw new UnauthorizedError("Invalid token");
+		}
+		const user = await User.findById(decoded.id);
+		if (!user) {
+			throw new UnauthorizedError("User not found");
+		}
+	} catch (error) {
 
-	if (!decoded) {
 		throw new UnauthorizedError("Invalid token");
-	}
+  }
 
-	const user = await User.findById(decoded.id);
-	if (!user) {
-		throw new UnauthorizedError("User not found");
-	}
+
 	next();
 }

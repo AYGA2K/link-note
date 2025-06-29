@@ -15,7 +15,6 @@ app.use(errorHandler);
 let mongo: MongoMemoryServer;
 describe("Folder API (Integration Tests)", () => {
 	let testUser: IUser;
-	let authToken: string;
 	let rootFolder: IFolder;
 
 	beforeAll(async () => {
@@ -31,9 +30,6 @@ describe("Folder API (Integration Tests)", () => {
 			email: "test@example.com",
 			password: "password123",
 		});
-
-		// Mock auth token
-		authToken = `mock-token-for-user-${testUser.id}`;
 	});
 
 	beforeEach(async () => {
@@ -62,10 +58,7 @@ describe("Folder API (Integration Tests)", () => {
 				parentFolderId: rootFolder.id,
 			};
 
-			const res = await request(app)
-				.post("/folders")
-				.set("Authorization", `Bearer ${authToken}`)
-				.send(newFolder);
+			const res = await request(app).post("/folders").send(newFolder);
 
 			expect(res.status).toBe(201);
 			expect(res.body).toMatchObject({
@@ -82,9 +75,7 @@ describe("Folder API (Integration Tests)", () => {
 		});
 
 		it("GET /folders → should retrieve all folders", async () => {
-			const res = await request(app)
-				.get("/folders")
-				.set("Authorization", `Bearer ${authToken}`);
+			const res = await request(app).get("/folders");
 
 			expect(res.status).toBe(200);
 			expect(res.body).toBeInstanceOf(Array);
@@ -92,9 +83,7 @@ describe("Folder API (Integration Tests)", () => {
 		});
 
 		it("GET /folders/:id → should retrieve a specific folder", async () => {
-			const res = await request(app)
-				.get(`/folders/${rootFolder.id}`)
-				.set("Authorization", `Bearer ${authToken}`);
+			const res = await request(app).get(`/folders/${rootFolder.id}`);
 
 			expect(res.status).toBe(200);
 			expect(res.body._id).toBe(rootFolder.id);
@@ -109,7 +98,6 @@ describe("Folder API (Integration Tests)", () => {
 
 			const res = await request(app)
 				.put(`/folders/${rootFolder._id}`)
-				.set("Authorization", `Bearer ${authToken}`)
 				.send(updates);
 
 			expect(res.status).toBe(200);
@@ -140,13 +128,10 @@ describe("Folder API (Integration Tests)", () => {
 				name: "New Parent",
 			});
 
-			const res = await request(app)
-				.patch("/folders/move")
-				.set("Authorization", `Bearer ${authToken}`)
-				.send({
-					id: childFolder.id,
-					parentFolderId: newParent.id,
-				});
+			const res = await request(app).patch("/folders/move").send({
+				id: childFolder.id,
+				parentFolderId: newParent.id,
+			});
 
 			expect(res.status).toBe(200);
 			expect(res.body.parentFolderId).toBe(newParent.id);
@@ -171,9 +156,7 @@ describe("Folder API (Integration Tests)", () => {
 				$push: { childrenFolders: grandchild._id },
 			});
 
-			const res = await request(app)
-				.delete(`/folders/${childFolder._id}`)
-				.set("Authorization", `Bearer ${authToken}`);
+			const res = await request(app).delete(`/folders/${childFolder._id}`);
 
 			expect(res.status).toBe(200);
 			expect(res.body.message).toBe(
@@ -196,18 +179,13 @@ describe("Folder API (Integration Tests)", () => {
 	describe("Error Handling", () => {
 		it("should return 404 for non-existent folder", async () => {
 			const fakeId = new mongoose.Types.ObjectId();
-			const res = await request(app)
-				.get(`/folders/${fakeId}`)
-				.set("Authorization", `Bearer ${authToken}`);
+			const res = await request(app).get(`/folders/${fakeId}`);
 
 			expect(res.status).toBe(404);
 		});
 
 		it("should return 400 for invalid folder ID format", async () => {
-			const res = await request(app)
-				.get("/folders/invalid-id")
-				.set("Authorization", `Bearer ${authToken}`);
-
+			const res = await request(app).get("/folders/invalid-id");
 			expect(res.status).toBe(400);
 		});
 
@@ -222,13 +200,10 @@ describe("Folder API (Integration Tests)", () => {
 				parentFolderId: folder1._id,
 			});
 			// Try to make folder1 a child of folder2 (creating a loop)
-			const res = await request(app)
-				.patch("/folders/move")
-				.set("Authorization", `Bearer ${authToken}`)
-				.send({
-					id: folder1._id,
-					parentFolderId: folder2._id,
-				});
+			const res = await request(app).patch("/folders/move").send({
+				id: folder1._id,
+				parentFolderId: folder2._id,
+			});
 			expect(res.status).toBe(400);
 		});
 	});

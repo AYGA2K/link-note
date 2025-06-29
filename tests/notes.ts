@@ -32,9 +32,6 @@ describe("Note API (Integration Tests)", () => {
 			password: "password123",
 		}).save();
 
-		// In a real app, you'd generate a proper token after login
-		authToken = `mock-token-for-user-${testUser._id}`;
-
 		// Create a test folder
 		testFolder = await new Folder({
 			userId: testUser._id,
@@ -71,10 +68,7 @@ describe("Note API (Integration Tests)", () => {
 				folderId: testFolder.id,
 			};
 
-			const res = await request(app)
-				.post("/notes")
-				.set("Authorization", `Bearer ${authToken}`)
-				.send(newNote);
+			const res = await request(app).post("/notes").send(newNote);
 
 			expect(res.status).toBe(201);
 			expect(res.body).toMatchObject({
@@ -96,9 +90,7 @@ describe("Note API (Integration Tests)", () => {
 				folderId: testFolder.id,
 			});
 
-			const res = await request(app)
-				.get("/notes")
-				.set("Authorization", `Bearer ${authToken}`);
+			const res = await request(app).get("/notes");
 
 			expect(res.status).toBe(200);
 			expect(res.body).toBeInstanceOf(Array);
@@ -115,9 +107,7 @@ describe("Note API (Integration Tests)", () => {
 				folderId: testFolder.id,
 			});
 
-			const res = await request(app)
-				.get(`/notes/${note.id}`)
-				.set("Authorization", `Bearer ${authToken}`);
+			const res = await request(app).get(`/notes/${note.id}`);
 
 			expect(res.status).toBe(200);
 			expect(res.body._id).toBe(note.id);
@@ -140,10 +130,7 @@ describe("Note API (Integration Tests)", () => {
 				userId: testUser.id,
 			};
 
-			const res = await request(app)
-				.put(`/notes/${note.id}`)
-				.set("Authorization", `Bearer ${authToken}`)
-				.send(updatedData);
+			const res = await request(app).put(`/notes/${note.id}`).send(updatedData);
 
 			expect(res.status).toBe(200);
 			expect(res.body.title).toBe(updatedData.title);
@@ -164,15 +151,11 @@ describe("Note API (Integration Tests)", () => {
 				folderId: testFolder.id,
 			});
 
-			const res = await request(app)
-				.delete(`/notes/${note.id}`)
-				.set("Authorization", `Bearer ${authToken}`);
+			const res = await request(app).delete(`/notes/${note.id}`);
 			expect(res.status).toBe(200);
 
 			// Verify deletion
-			const checkRes = await request(app)
-				.get(`/notes/${note.id}`)
-				.set("Authorization", `Bearer ${authToken}`);
+			const checkRes = await request(app).get(`/notes/${note.id}`);
 			expect(checkRes.status).toBe(404);
 		});
 	});
@@ -187,10 +170,7 @@ describe("Note API (Integration Tests)", () => {
 				folderId: testFolder.id,
 			};
 
-			const res = await request(app)
-				.post("/notes")
-				.set("Authorization", `Bearer ${authToken}`)
-				.send(newNote);
+			const res = await request(app).post("/notes").send(newNote);
 
 			expect(res.status).toBe(400);
 		});
@@ -200,9 +180,7 @@ describe("Note API (Integration Tests)", () => {
 	describe("Error Handling", () => {
 		it("should return 404 for non-existent note", async () => {
 			const fakeId = new mongoose.Types.ObjectId();
-			const res = await request(app)
-				.get(`/notes/${fakeId}`)
-				.set("Authorization", `Bearer ${authToken}`);
+			const res = await request(app).get(`/notes/${fakeId}`);
 			expect(res.status).toBe(404);
 		});
 	});
